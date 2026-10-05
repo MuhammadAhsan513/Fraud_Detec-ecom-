@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Order Check</title>
+  <meta name="description" content="Check whether an order looks unusual and see why.">
+  <!-- Filled in by GET / from the server's settings: upload limits and the required columns. -->
+  <meta name="batch-config" content="{{BATCH_CONFIG}}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+  <script src="/static/batch.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#tabs">Skip to the main content</a>
+
+  <header class="masthead">
+    <div class="masthead-inner">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+          <rect x="5" y="3" width="22" height="26" rx="3" fill="none" stroke="currentColor" stroke-width="2.2"/>
+          <path d="M10 11h12M10 16h12M10 21h6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <h1>Order check</h1>
+          <p class="tagline">Check one order or a whole file to see what looks unusual, and why.</p>
+        </div>
+      </div>
+      <p class="status" id="service-status" role="status" aria-live="polite">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span class="status-text">Checking the service…</span>
+      </p>
+    </div>
+
+    <details class="about masthead-inner" id="about">
+      <summary>How does this work?</summary>
+      <div class="about-body">
+        <p>A computer model has studied many past orders from this shop. It learned what a typical order
+          looks like: how prices, discounts, shipping, tax and fees usually relate to each other.</p>
+        <p>When you check an order, the model gives it an <strong>unusualness score</strong>. A higher
+          score means the order is less like the orders it has seen. If the score passes the
+          <strong>alert line</strong>, the order is marked "Needs a closer look".</p>
+        <p>You also get the three things that stand out most about the order compared with a typical one.</p>
+        <p>An unusual order is not necessarily fraud. A person should always make the final decision.</p>
+        <dl class="about-facts" id="about-facts" hidden>
+          <div><dt>Model</dt><dd id="fact-model">–</dd></div>
+          <div><dt>Version</dt><dd id="fact-version">–</dd></div>
+          <div><dt>Alert line</dt><dd id="fact-threshold">–</dd></div>
+          <div><dt>Orders it learned from</dt><dd id="fact-rows">–</dd></div>
+        </dl>
+      </div>
+    </details>
+  </header>
+
+  <div class="tabs-bar">
+    <div class="tabs" id="tabs" role="tablist" aria-label="What do you want to check?">
+      <button type="button" role="tab" id="tab-single" aria-controls="panel-single" aria-selected="true">
+        Single order
+      </button>
+      <button type="button" role="tab" id="tab-file" aria-controls="panel-file" aria-selected="false" tabindex="-1">
+        Whole file
+      </button>
+    </div>
+  </div>
+
+  <main class="layout" id="panel-single" role="tabpanel" aria-labelledby="tab-single" tabindex="-1">
+    <form id="order-form" class="order-form" novalidate aria-describedby="form-intro">
+      <div class="form-head">
+        <p id="form-intro" class="form-intro">Fill in the order details. Fields marked
+          <em>optional</em> can be left empty if you don't know them.</p>
+        <div class="examples" role="group" aria-label="Load an example order">
+          <span class="examples-label">Try an example:</span>
+          <button type="button" class="btn btn-quiet" data-example="normal">Ordinary order</button>
+          <button type="button" class="btn btn-quiet" data-example="flagged">Unusual order</button>
+        </div>
+        <div class="prefill">
+          <input type="file" id="prefill-file" class="file-input" accept=".json,.csv,application/json,text/csv"
+                 aria-describedby="prefill-hint">
+          <label for="prefill-file" class="btn btn-quiet file-button">Upload order details</label>
+          <p id="prefill-hint" class="hint">A .json file or a one-row .csv. It fills in the form so you can
+            review it. Nothing is checked until you press <strong>Check this order</strong>.</p>
+        </div>
+        <p id="prefill-status" class="prefill-status" aria-live="polite" hidden></p>
+      </div>
+
+      <div id="form-summary" class="form-summary" role="alert" hidden></div>
+
+      <!-- Fieldsets are filled in by app.js from the FIELDS list, so labels and limits live in one place. -->
+      <fieldset class="group" data-section="customer"><legend>Customer</legend><div class="grid"></div></fieldset>
+      <fieldset class="group" data-section="product"><legend>Product</legend><div class="grid"></div></fieldset>
+      <fieldset class="group" data-section="money">
+        <legend>Money</legend>
+        <div class="grid"></div>
+        <div class="expected" id="expected" aria-live="polite">
+          <div class="expected-figures">
+            <span class="expected-label">Expected total</span>
+            <output id="expected-value" class="expected-value" for="quantity unit_price discount_pct shipping_cost tax_amount">–</output>
+            <span id="expected-compare" class="expected-compare"></span>
+          </div>
+          <p class="expected-note">Items × price, minus discount, plus shipping and tax. The platform fee is
+            paid by the seller, so it is not part of the customer's total.</p>
+          <button type="button" class="btn btn-quiet" id="use-expected" disabled>Use this total</button>
+        </div>
+      </fieldset>
+      <fieldset class="group" data-section="payment"><legend>Payment &amp; channel</legend><div class="grid"></div></fieldset>
+
+      <div class="actions">
+        <button type="submit" class="btn btn-primary" id="submit-btn" disabled>
+          <span class="spinner" aria-hidden="true"></span>
+          <span class="btn-label">Check this order</span>
+        </button>
+        <button type="button" class="btn btn-quiet" id="clear-btn">Clear</button>
+      </div>
+    </form>
+
+    <aside class="side">
+      <section class="result" id="result" aria-live="polite" aria-labelledby="result-title" tabindex="-1">
+        <h2 id="result-title" class="visually-hidden">Result</h2>
+        <div class="result-empty" id="result-empty">
+          <p class="result-empty-title">No order checked yet</p>
+          <p>Fill in the form, or load an example, then choose <strong>Check this order</strong>.</p>
+        </div>
+        <div class="result-error" id="result-error" role="alert" hidden></div>
+        <div class="result-body" id="result-body" hidden>
+          <p class="verdict" id="verdict">
+            <span class="verdict-icon" aria-hidden="true"></span>
+            <span class="verdict-text"></span>
+          </p>
+          <p class="verdict-order" id="verdict-order"></p>
+
+          <figure class="meter" id="meter">
+            <div class="meter-track" role="img" id="meter-track">
+              <div class="meter-fill" id="meter-fill"></div>
+              <div class="meter-line" id="meter-line"><span>Alert line</span></div>
+              <div class="meter-pin" id="meter-pin"></div>
+            </div>
+            <div class="meter-scale" aria-hidden="true"><span>More typical</span><span>More unusual</span></div>
+            <figcaption>Higher score = more unusual. Orders past the alert line need a closer look.</figcaption>
+          </figure>
+
+          <h3 class="reasons-title">What stands out</h3>
+          <ol class="reasons" id="reasons"></ol>
+
+          <p class="caveat">This is a statistical warning, not proof of fraud.</p>
+
+          <details class="details">
+            <summary>Details</summary>
+            <dl id="details-list"></dl>
+          </details>
+        </div>
+      </section>
+
+      <section class="recent" aria-labelledby="recent-title">
+        <h2 id="recent-title">Recent checks</h2>
+        <p class="recent-note">Only on this page. Nothing is saved, and the list is cleared when you close or reload it.</p>
+        <ol class="recent-list" id="recent-list"></ol>
+        <p class="recent-empty" id="recent-empty">Orders you check will appear here.</p>
+      </section>
+    </aside>
+  </main>
+
+  <main class="file-panel" id="panel-file" role="tabpanel" aria-labelledby="tab-file" tabindex="-1" hidden>
+    <div class="file-grid">
+      <section class="card upload-card" aria-labelledby="upload-title">
+        <h2 id="upload-title">Check a whole file</h2>
+        <p class="muted">Upload a CSV file with one order per row. Every row is checked, and you get a report
+          you can download and share.</p>
+        <form id="batch-form" novalidate>
+          <div class="dropzone" id="dropzone">
+            <input type="file" id="batch-file" class="file-input" accept=".csv,text/csv"
+                   aria-describedby="batch-limits batch-file-info batch-file-error">
+            <label for="batch-file" class="dropzone-label">
+              <svg class="dropzone-icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+                <path d="M9 4h10l6 6v18H9z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M19 4v6h6M17 24v-9M13 19l4-4 4 4" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span class="dropzone-main">Drag a CSV file here</span>
+              <span class="dropzone-sub">or <span class="link-text">choose a file</span></span>
+            </label>
+          </div>
+          <p id="batch-limits" class="hint"></p>
+          <p id="batch-file-info" class="file-info" aria-live="polite"></p>
+          <p id="batch-file-error" class="error" aria-live="polite"></p>
+          <div class="actions">
+            <button type="submit" class="btn btn-primary" id="batch-submit" disabled>
+              <span class="spinner" aria-hidden="true"></span>
+              <span class="btn-label">Check this file</span>
+            </button>
+            <a class="btn btn-quiet" href="/template.csv" download="order-template.csv">Download template</a>
+          </div>
+          <p id="batch-progress" class="hint" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <section class="card columns-card" aria-labelledby="columns-title">
+        <h2 id="columns-title">Columns the file needs</h2>
+        <p class="muted">The first row holds the column names. Upper or lower case and the column order
+          don't matter. Rows with a blank required value are reported as <em>missing data</em>.</p>
+        <ul class="col-list" id="required-columns"></ul>
+        <p class="muted" id="optional-columns"></p>
+        <p class="muted">Any other columns are kept in the report but not used.</p>
+      </section>
+    </div>
+
+    <div class="result-error batch-error" id="batch-error" role="alert" hidden></div>
+
+    <section class="batch-result" id="batch-result" aria-labelledby="batch-title" tabindex="-1" hidden>
+      <div class="batch-head">
+        <div>
+          <h2 id="batch-title"></h2>
+          <p class="muted" id="batch-meta"></p>
+        </div>
+        <div class="downloads" role="group" aria-label="Download the report">
+          <a class="btn btn-quiet" id="dl-csv" download>Download full report (CSV)</a>
+          <a class="btn btn-quiet" id="dl-html" download>Download summary report (HTML)</a>
+          <a class="btn btn-quiet" id="dl-json" download>Download data (JSON)</a>
+        </div>
+      </div>
+      <ul class="stat-cards" id="stat-cards"></ul>
+      <div class="batch-notes" id="batch-notes"></div>
+      <p class="caveat">Orders marked "Needs a closer look" are statistically unusual. This is a statistical
+        warning, not proof of fraud.</p>
+
+      <div class="table-tools">
+        <label for="status-filter">Show</label>
+        <select id="status-filter">
+          <option value="">All rows</option>
+          <option value="suspicious">Needs a closer look</option>
+          <option value="normal">Looks normal</option>
+          <option value="missing_data">Missing data</option>
+          <option value="invalid_data">Invalid data</option>
+        </select>
+        <p class="table-count" id="table-count" aria-live="polite"></p>
+      </div>
+      <div class="table-wrap">
+        <table class="results-table">
+          <caption class="visually-hidden">Checked rows. Highest score first. Choose an order to see the details.</caption>
+          <thead>
+            <tr><th scope="col">Row</th><th scope="col">Order</th><th scope="col">Score</th><th scope="col">Result</th></tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+      <nav class="pager" aria-label="Result pages">
+        <button type="button" class="btn btn-quiet" id="page-prev">Previous page</button>
+        <span id="page-info"></span>
+        <button type="button" class="btn btn-quiet" id="page-next">Next page</button>
+      </nav>
+    </section>
+  </main>
+</body>
+</html>

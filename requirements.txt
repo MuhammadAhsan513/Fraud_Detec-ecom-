@@ -1,0 +1,18 @@
+# Runtime (train.py, detect_anomalies.py, model.joblib). The pickled pipeline depends on these exact versions.
+scikit-learn==1.9.1
+pandas==3.0.6
+numpy==2.5.3
+joblib==1.6.0
+scipy==1.18.1
+# Task 2 API (app/)
+fastapi==0.142.2
+starlette==1.7.0
+pydantic==2.13.5
+uvicorn==0.54.0
+httpx==0.28.1
+python-multipart==0.0.32         # multipart/form-data uploads for POST /analyze-batch
+# Tests / validation notebook
+pytest==9.1.1
+matplotlib==3.11.2
+nbconvert==7.17.1
+ipykernel==7.4.0
