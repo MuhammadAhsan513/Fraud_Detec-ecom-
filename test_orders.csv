@@ -1,0 +1,12 @@
+order_id,order_timestamp,customer_id,customer_country,customer_age,account_age_days,product_id,product_name,category,quantity,unit_price,discount_pct,shipping_cost,tax_amount,platform_fee,order_value,payment_method,sales_channel,device_type,ip_country,order_status,coupon_used
+ORD0021459,2026-05-14 21:59:00,C001240,US,63,848,P00797,GAR Product 0797,Garden,2,7.91,5,4.05,0.74,1.58,19.82,Bank Transfer,Mobile App,iPhone,US,Shipped,No
+ORD0007322,2025-10-14 22:55:00,C016829,France,41,599,P00207,TOY Product 0207,Toys,1,63.76,10,3.51,2.71,4.58,63.6,PayPal,Web,Android,UK,Completed,Yes
+ORD0032620,2026-08-13 06:43:00,C014547,US,19,1193,P01091,BEA Product 1091,Beauty,3,30.26,0,2.43,11.92,6.7,105.13,Apple Pay,Web,Android,US,Shipped,Yes
+ORD0010405,2026-09-05 02:18:00,C012068,UK,18,2928,P00532,HOM Product 0532,Home,1,115.37,15,11.67,13.55,13.3,123.28,PayPal,Marketplace,iPhone,UK,Completed,No
+ORD0048204,2026-06-04 20:30:00,C006369,France,53,219,P00959,GAR Product 0959,garden,1,13.97,10,8.76,2.07,1.83,23.4,paypal,web ,Android,Netherlands,Shipped,No
+ORD0099001,2026-03-02 11:15:00,C006369,France,53,219,P00959,GAR Product 0959,Garden,1,13.97,,8.76,2.07,1.83,23.4,Card,Web,Android,France,Completed,No
+ORD0099002,2026-04-10 03:20:00,C001240,US,63,848,P00797,GAR Product 0797,Garden,60,1500.0,0,9.5,9000.0,10350.0,99009.5,Card,Web,Desktop,US,Completed,No
+ORD0099003,2026-05-21 14:05:00,C016829,France,41,599,P00207,TOY Product 0207,Toys,1,63.76,90,5.0,0.64,0.73,520.4,Card,Web,Android,France,Completed,No
+ORD0099004,2026-06-30 09:45:00,C014547,US,19,1193,P01091,BEA Product 1091,Beauty,10,1.5,0,500.0,1.5,1.73,516.5,Card,Mobile App,iPhone,US,Completed,No
+ORD0099005,2026-07-18 22:10:00,C099999,UK,30,3,P00532,HOM Product 0532,Home,1,115.37,0,4.0,11.54,13.3,2500.0,Apple Pay,Marketplace,Android,US,Completed,No
+ORD0099006,2026-08-02 16:40:00,C012068,UK,18,2928,P00959,GAR Product 0959,Garden,1,30.0,0,5.0,3.0,60.0,38.0,PayPal,Web,Desktop,UK,Shipped,No
