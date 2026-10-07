@@ -473,6 +473,11 @@ def test_batch_matches_analyze_order_and_task1_on_real_rows(client, raw, scored,
     assert sum(r["status"] == "suspicious" for r in rows.values()) >= 20
 
 
+@__import__("pytest").mark.skipif(
+    (lambda f: not f.exists() or f.stat().st_size < 10_000_000)(
+        __import__("pathlib").Path(__file__).resolve().parent.parent / "orders-sheet.csv"),
+    reason="full orders-sheet.csv not present (CI uses a 2,000-row sample)",
+)
 def test_full_file_reproduces_task1(client, raw, scored, bundle):
     """All 150,000 rows of orders-sheet.csv: Task 1 counts and scores, missing/invalid reported separately."""
     with open(DATA_PATH, "rb") as f:

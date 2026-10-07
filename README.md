@@ -1006,3 +1006,14 @@ Excel or with `head`).
 * The report keeps cell text stripped of surrounding whitespace. Header names are written lower-cased.
 * Tests that create the app (e.g. `tests/test_api.py`) use the default `REPORTS_DIR=reports`, which is created in
   the project folder if it doesn't exist.
+
+## Data
+
+The dataset (`orders-sheet.csv`, 150,000 rows) is not stored in this repository because of its size.
+Place it in the project root to run the full test suite locally. To recreate `scored_orders.csv`:
+
+```bash
+python detect_anomalies.py --model model.joblib --input orders-sheet.csv --output scored_orders.csv
+```
+
+CI uses the 2,000-row samples in `tests/data/`, and the one test that needs the full file is skipped there.

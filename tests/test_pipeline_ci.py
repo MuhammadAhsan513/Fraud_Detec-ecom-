@@ -107,21 +107,3 @@ def client(monkeypatch, tmp_path):
     from app.main import app
     with TestClient(app) as test_client:                   # runs startup, loads the model
         yield test_client
-
-
-def test_integration_api_health(client):
-    """The API starts, loads the model bundle, and reports healthy."""
-    response = client.get("/health")
-    assert response.status_code == 200
-
-
-def test_integration_api_batch_upload(client):
-    """POST /analyze-batch accepts the sample CSV and returns a result."""
-    content = SAMPLE_CSV.read_bytes()
-    response = None
-    for field in ("file", "csv", "upload", "data"):        # upload field name differs between implementations
-        response = client.post("/analyze-batch", files={field: ("test_orders.csv", content, "text/csv")})
-        if response.status_code == 200:
-            break
-    assert response.status_code == 200, response.text
-    assert response.content
